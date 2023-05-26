@@ -13,13 +13,15 @@ def get_bars(symbol, timeframe, start, end) :
                         start=start,
                         end=end
                         )
-    bars = client.get_crypto_bars(request_params)
+    #agregue el 'us' porque sino saltaba-> alpaca.common.exceptions.APIError: {"message":"Invalid location: CryptoFeed.US"}
+    bars = client.get_crypto_bars(request_params,'us')
     
     return bars.df
 
 def get_bars_oc(symbol, timeframe, start, end) :
     bars = get_bars(symbol, timeframe, start, end)
     bars.drop(columns=['high', 'low', 'volume', 'trade_count', 'vwap'], inplace=True)
+    bars.reset_index(level=['timestamp'], inplace=True)
     
     return bars 
 
