@@ -161,3 +161,6 @@ cython_debug/
 
 #properties
 /conf
+
+#db de prueba
+sql_exchange.db
