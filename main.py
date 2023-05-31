@@ -71,7 +71,7 @@ def read_balance(db: Session = Depends(get_db)):
     """Gets current balance
     """
     balance = crud.get_balance(db)
-    print(balance)
+
     return balance
 
 
