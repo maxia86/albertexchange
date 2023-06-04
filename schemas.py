@@ -12,6 +12,7 @@ class TradeBase(BaseModel):
     ticker: str
     amount: int
 
+
 class TradeCreate(TradeBase):
     operation: str
     price: float
@@ -21,12 +22,23 @@ class TradeCreate(TradeBase):
 class Trade(TradeCreate):
     id: int
 
-
     class Config:
         orm_mode = True
 
 
-class Balance(BaseModel):
+class PositionCreate(BaseModel):
     ticker: str
     amount: int
+
+
+class Position(PositionCreate):
+    id: int
     vwap: float
+    class Config:
+        orm_mode = True
+
+
+class Profit(BaseModel):
+    ticker: str
+    amount: int
+    profit: float

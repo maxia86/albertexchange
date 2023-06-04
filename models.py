@@ -12,3 +12,12 @@ class Trades(Base):
     operation = Column(String)
     price = Column(DECIMAL)
     timestamp = Column(DATETIME)
+
+
+class Positions(Base):
+    __tablename__ = "positions"
+
+    id = Column(Integer, primary_key= True, index= True)
+    ticker = Column(String, unique=True)
+    amount = Column(Integer)
+    vwap = Column(DECIMAL)
