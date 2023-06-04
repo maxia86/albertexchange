@@ -1,5 +1,5 @@
 from alpaca.data.timeframe import TimeFrame
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
 import datetime
@@ -29,7 +29,7 @@ def get_db():
         db.close()
 
 #precios open/close del ticker por dia
-@app.get("/prices/{ticker}", response_model=list[schemas.OpenClose])
+@app.get("/prices/{ticker}/USD", response_model=list[schemas.OpenClose])
 def get_prices(ticker: str, days: int = 7) :
     """Gets Open/Close prices for the selected ticker and amount of days
     """
@@ -39,8 +39,8 @@ def get_prices(ticker: str, days: int = 7) :
     return result
 
 #compra del ticker por cantidad a precio actual
-@app.post("/trades/", response_model=schemas.Trade)
-def create_trade(trade: schemas.TradeBase, db: Session = Depends(get_db)) :
+@app.post("/trades/", response_model=schemas.Position)
+def create_trade_buy(trade: schemas.TradeBase, db: Session = Depends(get_db)) :
     """Performs a BUY trade for the specified ticker and amount at the current price
     """
     if (trade.amount > 0 ) :
@@ -48,13 +48,15 @@ def create_trade(trade: schemas.TradeBase, db: Session = Depends(get_db)) :
        trade_operation = 'buy'
        trade_price = broker.get_current_c(trade.ticker, TimeFrame.Day)
        create_trade = schemas.TradeCreate(**trade.dict(), operation=trade_operation, timestamp=trade_timestamp, price=trade_price)
-       result = crud.create_trade_buy(db=db, trade=create_trade)
+       crud.create_trade(db=db, trade=create_trade)
+       create_position=schemas.PositionCreate(ticker=trade.ticker,amount=trade.amount)
+       result = crud.increase_position(db=db, position=create_position, price=trade_price)
     else :
         raise HTTPException(status_code=400, detail="Invalid Operation")
         
     return result
 
-
+#todos los trades
 @app.get("/trades/", response_model=list[schemas.Trade])
 def read_trades(skip: int = 0, 
                limit: int = 100, 
@@ -66,14 +68,44 @@ def read_trades(skip: int = 0,
 
     return trades
 
-@app.get("/balance/", response_model=list[schemas.Balance])
-def read_balance(db: Session = Depends(get_db)):
-    """Gets current balance
+
+#venta del ticker por cantidad al precio actual
+@app.put("/trades/", response_model=schemas.Profit)
+def create_trade_sell(trade: schemas.TradeBase, db: Session = Depends(get_db)):
+    """Performs a SELL trade for the specified ticker and amount at the current price
     """
-    balance = crud.get_balance(db)
+    if (trade.amount > 0 and trade.amount <= crud.get_amount(db=db, ticker=trade.ticker)) :
+       trade_timestamp = datetime.datetime.today()
+       trade_operation = 'sell'
+       trade_price = broker.get_current_c(trade.ticker, TimeFrame.Day)
+       create_trade = schemas.TradeCreate(**trade.dict(), operation=trade_operation, timestamp=trade_timestamp, price=trade_price)
+       crud.create_trade(db=db, trade=create_trade)
+       create_position = schemas.PositionCreate(ticker=trade.ticker,amount=trade.amount)
+       result = crud.decrease_position(db=db, position=create_position, price=trade_price)
+    else :
+        raise HTTPException(status_code=409, detail="Invalid Operation")
+     
+    return result
 
-    return balance
 
+#posicion actual total
+@app.get("/positions/", response_model=list[schemas.Position])
+def read_positions(db: Session = Depends(get_db)):
+    """Gets current positions
+    """
+    positions = crud.get_positions(db)
+
+    return positions
+
+
+#posicion actual ticker
+@app.get("/positions/{ticker}/USD", response_model=schemas.Position)
+def read_position(ticker:str, db: Session = Depends(get_db)):
+    """Gets current positions for ticker
+    """
+    position = crud.get_position(db=db, ticker=ticker+"/USD")
+
+    return position
 
 
 ##################
