@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+#from sqlalchemy import func
 
-import brokers.alpaca as broker
+#import brokers.alpaca as broker
 import models
 import schemas
 
@@ -39,7 +39,7 @@ def decrease_position(db: Session, position:schemas.PositionCreate, price: float
     if db_position.amount > position.amount:
         db_position.amount = models.Positions.amount - position.amount
         db.commit()
-#        db.refresh(db_position)
+
     else:
         db.delete(db_position)
         db.commit()

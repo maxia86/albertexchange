@@ -1,5 +1,5 @@
 from alpaca.data.timeframe import TimeFrame
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
 import datetime
@@ -107,11 +107,6 @@ def read_position(ticker:str, db: Session = Depends(get_db)):
 
     return position
 
-
-#a borrar
-@app.get("/amount/{ticker}")
-def lala(ticker: str, db: Session = Depends(get_db)):
-    return crud.get_amount(db=db, ticker=ticker+"/USD")
 
 ##################
 #para arrancar uvicorn con play en vez de linea de comando $ uvicorn main:app --reload --port 8000
